@@ -242,6 +242,14 @@ resource "alicloud_cdn_domain_config" "image_transform" {
     arg_name  = "filetype"
     arg_value = "jpg|jpeg|png|bmp|gif|tiff|jp2"
   }
+  function_args {
+    arg_name  = "orient"
+    arg_value = "on"
+  }
+  function_args {
+    arg_name  = "slim"
+    arg_value = "90"
+  }
 }
 
 resource "alicloud_cdn_domain_config" "set_hashkey_args" {
@@ -251,6 +259,10 @@ resource "alicloud_cdn_domain_config" "set_hashkey_args" {
   function_args {
     arg_name  = "disable"
     arg_value = "on"
+  }
+  function_args {
+    arg_name  = "keep_oss_args"
+    arg_value = "off"
   }
   function_args {
     arg_name  = "hashkey_args"
