@@ -3,9 +3,27 @@ variable "oss_bucket" {
   description = "OSS bucket for hosting website."
 }
 
-variable "cdn_domain" {
+variable "index_document" {
   type        = string
-  description = "CDN domain for access website."
+  default     = "index.html"
+  description = "Alicloud OSS returns this index document when requests are made to the root domain or any of the subfolders."
+}
+
+variable "error_document" {
+  type        = string
+  default     = null
+  nullable    = true
+  description = "(Optional) An absolute path to the document to return in case of a 4XX error."
+}
+
+variable "domain" {
+  type        = string
+  description = "Your base domain. Full access domain will be {cdn_sub_dumain}.{domain}. E.g: example.com"
+}
+
+variable "cdn_sub_domain" {
+  type        = string
+  description = "CDN sub doman for access website. Full access domain will be {cdn_sub_dumain}.{domain}. E.g: www"
 }
 
 variable "cdn_scope" {
@@ -25,15 +43,14 @@ variable "auto_webp" {
   description = "Whether enable CDN auto webp convert."
 }
 
-variable "index_document" {
-  type        = string
-  default     = "index.html"
-  description = "Alicloud OSS returns this index document when requests are made to the root domain or any of the subfolders."
+variable "keep_oss_args" {
+  type        = list(string)
+  default     = []
+  description = "(Optional) Keep origin oss args."
 }
 
-variable "error_document" {
-  type        = string
-  default     = null
-  nullable    = true
-  description = "(Optional) An absolute path to the document to return in case of a 4XX error."
+variable "config_dns" {
+  type        = bool
+  default     = true
+  description = "Config DNS. If your DNS is not in Alicloud, please set this to false, then you should config CNAME by yourself in your DNS."
 }

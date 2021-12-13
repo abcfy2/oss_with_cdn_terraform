@@ -13,3 +13,7 @@ output "oss_intranet_location" {
 output "cdn_cname" {
   value = alicloud_cdn_domain_new.cdn.cname
 }
+
+output "access_domain" {
+  value = local.cdn_alias
+}

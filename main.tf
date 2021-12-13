@@ -1,3 +1,9 @@
+locals {
+  domain      = var.domain
+  domain_name = trimsuffix(local.domain, ".")
+  cdn_alias   = trimprefix("${var.cdn_sub_domain}.${local.domain_name}", ".")
+}
+
 resource "alicloud_oss_bucket" "bucket_website" {
   bucket = var.oss_bucket
   acl    = "public-read"
@@ -9,9 +15,9 @@ resource "alicloud_oss_bucket" "bucket_website" {
 }
 
 resource "alicloud_cdn_domain_new" "cdn" {
-  domain_name = var.cdn_domain
+  domain_name = local.cdn_alias
   cdn_type    = "web"
-  scope       = "domestic"
+  scope       = var.cdn_scope
 
   sources {
     content = "${alicloud_oss_bucket.bucket_website.id}.${alicloud_oss_bucket.bucket_website.extranet_endpoint}"
@@ -21,6 +27,15 @@ resource "alicloud_cdn_domain_new" "cdn" {
   certificate_config {
     cert_type = "free"
   }
+}
+
+# TODO: support www sub domain
+resource "alicloud_dns_record" "this" {
+  count       = var.config_dns ? 1 : 0
+  name        = local.domain_name
+  host_record = coalesce(var.cdn_sub_domain, "@")
+  type        = "CNAME"
+  value       = alicloud_cdn_domain_new.cdn.cname
 }
 
 resource "alicloud_cdn_domain_config" "path_based_ttl_set" {
@@ -51,7 +66,7 @@ resource "alicloud_cdn_domain_config" "origin_request_delete_accept_encoding" {
   }
   function_args {
     arg_name  = "header_name"
-    arg_value = "accept-encoding"
+    arg_value = "Accept-Encoding"
   }
 }
 
@@ -74,6 +89,16 @@ resource "alicloud_cdn_domain_config" "ipv6" {
   function_name = "ipv6"
 
   function_args {
+    arg_name  = "switch"
+    arg_value = "on"
+  }
+}
+
+resource "alicloud_cdn_domain_config" "gzip" {
+  domain_name   = alicloud_cdn_domain_new.cdn.domain_name
+  function_name = "gzip"
+
+  function_args {
     arg_name  = "enable"
     arg_value = "on"
   }
@@ -93,14 +118,28 @@ resource "alicloud_cdn_domain_config" "brotli" {
   }
 }
 
+resource "alicloud_cdn_domain_config" "tesla" {
+  domain_name   = alicloud_cdn_domain_new.cdn.domain_name
+  function_name = "tesla"
+
+  function_args {
+    arg_name  = "enable"
+    arg_value = "on"
+  }
+  function_args {
+    arg_name  = "trim_js"
+    arg_value = "on"
+  }
+  function_args {
+    arg_name  = "trim_css"
+    arg_value = "on"
+  }
+}
+
 resource "alicloud_cdn_domain_config" "https" {
   domain_name   = alicloud_cdn_domain_new.cdn.domain_name
   function_name = "https_option"
 
-  function_args {
-    arg_name  = "https"
-    arg_value = "on"
-  }
   function_args {
     arg_name  = "http2"
     arg_value = "on"
@@ -149,7 +188,17 @@ resource "alicloud_cdn_domain_config" "HSTS" {
   }
   function_args {
     arg_name  = "https_hsts_max_age"
-    arg_value = "5184000s"
+    arg_value = "5184000"
+  }
+}
+
+resource "alicloud_cdn_domain_config" "range" {
+  domain_name   = alicloud_cdn_domain_new.cdn.domain_name
+  function_name = "range"
+
+  function_args {
+    arg_name  = "enable"
+    arg_value = "on"
   }
 }
 
@@ -167,9 +216,9 @@ resource "alicloud_cdn_domain_config" "video_seek" {
   }
 }
 
-resource "alicloud_cdn_domain_config" "range" {
+resource "alicloud_cdn_domain_config" "ali_video_split" {
   domain_name   = alicloud_cdn_domain_new.cdn.domain_name
-  function_name = "video_seek"
+  function_name = "ali_video_split"
 
   function_args {
     arg_name  = "enable"
@@ -188,5 +237,23 @@ resource "alicloud_cdn_domain_config" "image_transform" {
   function_args {
     arg_name  = "webp"
     arg_value = "on"
+  }
+  function_args {
+    arg_name  = "filetype"
+    arg_value = "jpg|jpeg|png|bmp|gif|tiff|jp2"
+  }
+}
+
+resource "alicloud_cdn_domain_config" "set_hashkey_args" {
+  domain_name   = alicloud_cdn_domain_new.cdn.domain_name
+  function_name = "set_hashkey_args"
+
+  function_args {
+    arg_name  = "disable"
+    arg_value = "on"
+  }
+  function_args {
+    arg_name  = "hashkey_args"
+    arg_value = join(",", var.keep_oss_args)
   }
 }
