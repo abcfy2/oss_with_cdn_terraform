@@ -16,14 +16,15 @@ variable "error_document" {
   description = "(Optional) An absolute path to the document to return in case of a 4XX error."
 }
 
-variable "domain" {
+variable "domain_name" {
   type        = string
-  description = "Your base domain. Full access domain will be {cdn_sub_dumain}.{domain}. E.g: example.com"
+  description = "Your domain name. Full access domain will be {subdomain}.{domain_name}. E.g: example.com"
 }
 
-variable "cdn_sub_domain" {
+variable "subdomain" {
   type        = string
-  description = "CDN sub doman for access website. Full access domain will be {cdn_sub_dumain}.{domain}. E.g: www"
+  default     = ""
+  description = "CDN subdoman for access website, if you want to use like `example.com` as access domain, keep this empty. Full access domain will be {cdn_sub_dumain}.{domain_name}. E.g: www"
 }
 
 variable "cdn_scope" {

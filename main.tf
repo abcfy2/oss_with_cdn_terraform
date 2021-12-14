@@ -1,7 +1,6 @@
 locals {
-  domain      = var.domain
-  domain_name = trimsuffix(local.domain, ".")
-  cdn_alias   = trimprefix("${var.cdn_sub_domain}.${local.domain_name}", ".")
+  domain_name = trimsuffix(var.domain_name, ".")
+  cdn_alias   = trimprefix("${var.subdomain}.${local.domain_name}", ".")
 }
 
 resource "alicloud_oss_bucket" "bucket_website" {
@@ -29,11 +28,19 @@ resource "alicloud_cdn_domain_new" "cdn" {
   }
 }
 
-# TODO: support www sub domain
 resource "alicloud_dns_record" "this" {
   count       = var.config_dns ? 1 : 0
   name        = local.domain_name
-  host_record = coalesce(var.cdn_sub_domain, "@")
+  host_record = coalesce(var.subdomain, "@")
+  type        = "CNAME"
+  value       = alicloud_cdn_domain_new.cdn.cname
+}
+
+# only if you use www host
+resource "alicloud_dns_record" "cname_for_empty_host" {
+  count       = var.config_dns && var.subdomain == "www" ? 1 : 0
+  name        = local.domain_name
+  host_record = "@"
   type        = "CNAME"
   value       = alicloud_cdn_domain_new.cdn.cname
 }
