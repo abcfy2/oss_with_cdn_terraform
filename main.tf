@@ -36,11 +36,11 @@ resource "alicloud_dns_record" "this" {
   value       = alicloud_cdn_domain_new.cdn.cname
 }
 
-# only if you use www host
-resource "alicloud_dns_record" "cname_for_empty_host" {
-  count       = var.config_dns && var.subdomain == "www" ? 1 : 0
+# only if you use www prefix host
+resource "alicloud_dns_record" "cname_for_trimprefix_www" {
+  count       = var.config_dns && split(".", var.subdomain)[0] == "www" && var.auto_cname_without_www ? 1 : 0
   name        = local.domain_name
-  host_record = "@"
+  host_record = coalesce(trimprefix(trimprefix(var.subdomain, "www"), "."), "@")
   type        = "CNAME"
   value       = alicloud_cdn_domain_new.cdn.cname
 }

@@ -27,6 +27,12 @@ variable "subdomain" {
   description = "CDN subdoman for access website, if you want to use like `example.com` as access domain, keep this empty. Full access domain will be {cdn_sub_dumain}.{domain_name}. E.g: www"
 }
 
+variable "auto_cname_without_www" {
+  type        = bool
+  default     = true
+  description = "Auto set CNAME for non-www host. E.g, if your domain is www.example.com or www.a.example.com, will auto set CNAME for example.com or a.example.com. If you want to use example.com or a.example.com for other service, you may set this variable to false after https is working."
+}
+
 variable "cdn_scope" {
   type        = string
   default     = "domestic"
